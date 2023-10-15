@@ -1,0 +1,7 @@
+a,2,BOOLEAN,choose the machine 1 or 2,0
+b,1,INTEGER,doing nothing,1
+c,3,INTEGER,numbers to add,2
+d,4,STR,names of people,3
+e,1,INTEGER,b,4
+f,2,INTEGER,c,5
+g,1,INTEGER,a,6
