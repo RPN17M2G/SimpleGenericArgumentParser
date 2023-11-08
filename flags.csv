@@ -1,7 +1,19 @@
-a,2,BOOLEAN,choose the machine 1 or 2,0
-b,1,INTEGER,doing nothing,1
-c,3,INTEGER,numbers to add,2
-d,4,STR,names of people,3
-e,1,INTEGER,b,4
-f,2,INTEGER,c,5
-g,1,INTEGER,a,6
+//Csv file format: flag, extra s, number_of_values, types_of_values, description
+//Flags must be unique
+c,FALSE,1,BOOLEAN,DESC
+f,FALSE,0,DESC
+tg,FALSE,0,DESC
+tc,FALSE,3,BOOLEAN,STR,INTEGER,DESC
+b,TRUE,0,DESC
+dr,TRUE,0,DESC
+d,TRUE,2,INTEGER,INTEGER,DESC
+df,TRUE,2,INTEGER,INTEGER,DESC
+ef,TRUE,0,DESC
+es,TRUE,1,INTEGER,DESC
+r,TRUE,0,DESC
+ss,TRUE,1,BOOLEAN,DESC
+w,TRUE,2,INTEGER,STR,DESC
+wf,TRUE,2,INTEGER,STR,DESC
+x,TRUE,2,INTEGER,STR,DESC
+xx,TRUE,2,INTEGER,STR,DESC
+

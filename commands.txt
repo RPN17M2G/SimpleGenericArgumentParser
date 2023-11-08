@@ -1,3 +1,1 @@
 g++ -m32 -o path_to_dest path_to_src
-
-ArgumentParser -a 1 FALSE -b 0xA67 -c 1 0x2 0x100 -d abcd agfh okj g -e 5 -f 0x80 2 -g 1

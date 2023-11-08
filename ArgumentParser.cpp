@@ -1,6 +1,6 @@
 #include "ArgumentParser.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char* argv[]) // 0x16, 22
 {
     csvParser::findFlags(); //Load flags from csv
 
@@ -10,6 +10,10 @@ int main(int argc, char* argv[])
         std::cout << "Usage: " << std::endl << "ArgumentParser <-flag> <value> <value2> ... <-flag>" << std:: endl << "ArgumentParser " << csvParser::formatFlagsForPrint() << std::endl << std::endl << "Options: " << std::endl;
         csvParser::printAllFlags();
         return 0;
+    }
+
+    if (ArgumentsParser::extra_s) {
+        analyzer.s_flag(argc, argv);
     }
 
     analyzer.finishParser();
@@ -23,6 +27,7 @@ ArgumentsParser::ArgumentsParser(int argc, char* argv[])
     Inserting all tokens from argv to a vector
     without the program name.
     */
+
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] == '-') { //A flag
 
@@ -31,14 +36,20 @@ ArgumentsParser::ArgumentsParser(int argc, char* argv[])
                 exit(1);
             }
 
-            if (csvParser::MFlags.find(argv[i]) == csvParser::MFlags.end() && !(!strcmp(argv[i],"-h") || !strcmp(argv[i],"--help"))) { //Flag does not exists
+            if (csvParser::MFlags.find(argv[i]) == csvParser::MFlags.end() && !(!strcmp(argv[i],"-h") || !strcmp(argv[i],"--help") || !strcmp(argv[i], "-s"))) { //Flag does not exists
                 std::cerr << "Flag " << (std::string)(argv[i] + 1) << " does not exists." << std::endl << "Exiting program.";
                 exit(1);
             }
 
+            if (!(!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help") || !strcmp(argv[i], "-s"))) { //Not special flag
+                ArgumentsParser::extra_s = ArgumentsParser::extra_s | csvParser::MFlags[argv[i]].extra_s;
+            }
+
+
             this->MFlagsMap[argv[i]] = this->extractValue(argv[i], i, argc, argv);
 
             i += csvParser::MFlags[argv[i]].numberOfValues;
+
         } 
         else {
             std::cerr << "Unexpected value." << std::endl << "Exiting program.";
@@ -54,12 +65,15 @@ ArgumentsParser::~ArgumentsParser()
     deconstructor for ArgumentParser.
     deleting all strings from MFlagsMap.
     */
+    int index_types = -1;
     for (auto index : MFlagsMap) {
-        if (csvParser::MFlags[index.first].type == ETypeValue::STR) {
-            for (auto i : index.second) {
-                delete(i.v_str);
+        index_types = -1;
+        for (auto type : csvParser::MFlags[index.first].types) {
+            index_types++;
+            if (type == ETypeValue::STR) {
+                delete index.second.at(index_types).v_str;
             }
-        }
+        }   
     }
 }
 
@@ -69,13 +83,16 @@ const void ArgumentsParser::printMap()
     Printing all tokens in the vector
     *Mainly for test purposes.
     */
+    int index_types = -1;
     for (auto index : MFlagsMap) {
+        index_types = -1;
         if (csvParser::MFlags[index.first].numberOfValues > 0) {
             std::cout << index.first << std::endl;
             for (auto i : index.second) {
+                index_types++;
                 std::cout << "Value: ";
 
-                switch (csvParser::MFlags[index.first].type) {
+                switch (csvParser::MFlags[index.first].types.at(index_types)) {
                     case ETypeValue::INTEGER:
                         std::cout << "Integer - " << i.v_integer;
                         break;
@@ -108,6 +125,15 @@ const inline bool ArgumentsParser::shouldPrintHelp()
         || MFlagsMap.find("--help") != MFlagsMap.end();
 }
 
+const bool ArgumentsParser::s_flag(int argc, char* argv[]) 
+{
+    std::vector<UValuesUnion> flag_value;
+    if (MFlagsMap.find("-s") != MFlagsMap.end()) {
+        flag_value = (*MFlagsMap.find("-s")).second;
+    }
+    return false;
+}
+
 
 
 std::vector<UValuesUnion> ArgumentsParser::extractValue(const std::string flag,int index ,int argc, char* argv[])
@@ -127,7 +153,7 @@ std::vector<UValuesUnion> ArgumentsParser::extractValue(const std::string flag,i
             exit(1);
         }
 
-        switch (csvParser::MFlags[flag].type) {
+        switch (csvParser::MFlags[flag].types.at(i - 1)) {
             case ETypeValue::INTEGER:
                 hex_base = false;
                 if (strlen(argv[index + i]) >= MIN_LENGTH_FOR_HEX_NUMBER) {
@@ -138,7 +164,8 @@ std::vector<UValuesUnion> ArgumentsParser::extractValue(const std::string flag,i
                 break;
 
             case ETypeValue::STR:
-                flagValue.v_str = argv[index + i];
+                flagValue.v_str = new char[strlen(argv[index + i]) + 1];
+                strcpy_s(flagValue.v_str, strlen(argv[index + i]) + 1, argv[index + i]);
                 break;
 
             case ETypeValue::BOOLEAN:
@@ -164,8 +191,24 @@ void ArgumentsParser::finishParser()
     /*
     Passing results to the functions of each flag
     */
+    if (ArgumentsParser::extra_s && MFlagsMap.find("-s") == MFlagsMap.end()) {
+        std::cerr << "Didn't provided -s flag which is needed for some of your operations." << std::endl;
+        exit(1);
+    }
+    else if (ArgumentsParser::extra_s) {
+        if ((*MFlagsMap.find("-s")).second.size() == 1 && ((*MFlagsMap.find("-s")).second.at(0).v_integer >= MIN_VALUE_FOR_S && (*MFlagsMap.find("-s")).second.at(0).v_integer <= MAX_VALUE_FOR_S)) {
+            functionArray[csvParser::MFlags["-s"].function_index]((*MFlagsMap.find("-s")).first,(*MFlagsMap.find("-s")).second);
+            MFlagsMap.erase("-s"); //Delete the s flag because it's function already ran
+        }
+        else {
+            std::cerr << "Value out of bounds for flag -s" << std::endl;
+            exit(1);
+        }
+        
+    }
+
     for (auto index : MFlagsMap) {
-        functionArray[csvParser::MFlags[index.first].function_index](index.second.size(), index.second);
+        functionArray[csvParser::MFlags[index.first].function_index](index.first,index.second);
     }
 }
 
@@ -174,47 +217,59 @@ void csvParser::findFlags()
     /*
     Uploading from the csv file all of the flags and
     their properties.
-
-    
-    
-    CSV file format:
-    nameOfFlag(must start with '-'),mustHaveValue(must be "TRUE" or "FALSE" or those values in number(0/1)),type(Number between 0 to the length of typeValue enum)
-    ,numberOfValues(must be greater than 0), helpMessage(messeage to print), typeOfOperation(Number between 0 to the length of typeOfOperation enum)
-    
-    
     */
     std::ifstream readCSV(csvParser::SCsvPath);
     std::string line;
     char* part;
     char* token;
     std::string flag = "-";
+    int index = -1;
 
     while (std::getline(readCSV, line)) {
-        part = strtok_s(const_cast<char*>(line.c_str()), ",", &token); //Cutting the line
-        flag = "-";
-        flag += part;
+        if (line.length() > 2 && line.at(0) != '/' && line.at(1) != '/') { //Not a comment
+            part = strtok_s(const_cast<char*>(line.c_str()), ",", &token); //Cutting the line
+            flag = "-";
+            flag += part;
+            index++;
+
+            //Does need s flag extraction
+            part = strtok_s(NULL, ",", &token);
+            checkNull(part, flag, "extra_s");
+            MFlags[flag].extra_s = checkBool(part, flag);
+
+            //Number of values extraction
+            part = strtok_s(NULL, ",", &token);
+            checkNull(part, flag, "numberOfValues");
+            MFlags[flag].numberOfValues = checkInt(part, flag, 0);
+
+            for (int i = 0; i < MFlags[flag].numberOfValues; i++) {
+                //Value type extraction
+                part = strtok_s(NULL, ",", &token);
+                checkNull(part, flag, "valueType");
+                MFlags[flag].types.push_back(switchValueType(part, flag));
+            }
+            
+            //Help message extraction
+            part = strtok_s(NULL, ",", &token);
+            checkNull(part, flag, "helpMessage");
+            MFlags[flag].helpMessage = part;
+
+            //Function index
+            MFlags[flag].function_index = index;
+        }
         
-        //Number of values extraction
-        part = strtok_s(NULL, ",", &token);
-        checkNull(part, flag, "numberOfValues");
-        MFlags[flag].numberOfValues = checkInt(part, flag, 0);
-
-        //Value type extraction
-        part = strtok_s(NULL, ",", &token);
-        checkNull(part, flag, "valueType");
-        MFlags[flag].type = switchValueType(part, flag);
-
-        //Help message extraction
-        part = strtok_s(NULL, ",", &token);
-        checkNull(part, flag, "helpMessage");
-        MFlags[flag].helpMessage = part;
-
-        //Function index extraction
-        part = strtok_s(NULL, ",", &token);
-        checkNull(part, flag, "functionIndex");
-        MFlags[flag].function_index = checkInt(part, flag, 0, 8);
         
     }
+
+    //Adding s flag manullly
+    MFlags["-s"].extra_s = false;
+    MFlags["-s"].numberOfValues = 1;
+    MFlags["-s"].types.push_back(INTEGER);
+    MFlags["-s"].helpMessage = "DESC - Choose a number 1 or 2"; //Example operation, change as require
+    MFlags["-s"].function_index = ++index;
+
+
+
 }
 
 void csvParser::printAllFlags()
@@ -224,9 +279,14 @@ void csvParser::printAllFlags()
     */
     std::cout << "-h / --help" << std::endl << "    Prints documantiaion of the flags" << std::endl; //Prints help flag
     for (auto index : MFlags) {
-        std::cout << index.first << std::endl << "    " << index.second.helpMessage << std::endl << "    Type: " << MTypeValueForPrint[index.second.type] << 
-            std::endl << "    Number of values: " << index.second.numberOfValues << std::endl 
-            << "    Function index: " << index.second.function_index << std::endl;
+        if (index.first != "-h") { //Dont print help flag again
+            std::cout << index.first << std::endl << "    " << index.second.helpMessage << std::endl
+                << "    Function index: " << index.second.function_index << std::endl << "    Number of values: " << index.second.numberOfValues << std::endl;
+            for (int i = 0; i < index.second.numberOfValues; i++) {
+                std::cout << "    Type for value number " << i + 1 << ": " << MTypeValueForPrint[index.second.types.at(i)] << std::endl;
+            }
+            std::cout << std::endl;
+        }
     }
 }
 
@@ -268,6 +328,9 @@ long long csvParser::checkInt(char* part, std::string flag, bool hex)
 
     try {
         temp = std::strtol(part, NULL, base);
+        if (temp == 0 && part[0] != '0') {
+            throw std::exception();
+        }
     }
     catch (...) {
         std::cerr << (("Value is not an integer for flag " + flag.substr(1)).c_str()) << std::endl << "Exiting program.";
@@ -313,9 +376,9 @@ bool csvParser::checkBool(char* part, std::string flag)
     Input: char* part, std::string flag
     Output: the string as bool
     */
-    bool result = strcmp(part, "FALSE");
-    if (strcmp(part, "TRUE") && strcmp(part, "FALSE") && !(strlen(part) == 1 && (*part == '0' || *part == '1'))) { //Input is not TRUE and is not FALSE
-        std::cerr << "Value must be TRUE or FALSE or 0 or 1 for flag " << flag.substr(1) << std::endl << "Exiting program.";
+    bool result = !(!strcmp(part, "FALSE") || !strcmp(part, "false"));
+    if (strcmp(part, "true") && strcmp(part, "false") && strcmp(part, "TRUE") && strcmp(part, "FALSE") && !(strlen(part) == 1 && (*part == '0' || *part == '1'))) { //Input is not TRUE and is not FALSE
+        std::cerr << "Value must be TRUE or FALSE or true or false or 0 or 1 for flag " << flag.substr(1) << std::endl << "Exiting program.";
         exit(1);
     }
 
