@@ -46,7 +46,7 @@ class TestProgram(unittest.TestCase):
         '''
         Testing the program with expected and unexpected values and flags
         '''
-        
+
         test_pass, test_failed = 0, 0
         for row in parse_csv(self.csv_file):
             if len(row) > MIN_ROW_LENGTH: 
@@ -72,8 +72,8 @@ class TestProgram(unittest.TestCase):
                         test_args.append(self.generate_value(value_type))
 
                 result = subprocess.run(test_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                outputOut = result.stdout.decode('utf-8')
-                outputErr = result.stderr.decode('utf-8')
+                outputOut = result.stdout.strip().decode('utf-8')
+                outputErr = result.stderr.strip().decode('utf-8')
                 output = outputOut if outputErr == "" else outputErr #Choose between error message and output
                 output = output.replace("\r\n","") #Remove hidden characters                
 

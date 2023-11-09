@@ -7,6 +7,12 @@
 #include <cstring>
 #include <functional>
 #include <cstdarg>
+#include<array> 
+#include <exception>
+
+
+#ifndef ARGUMENT_PARSER
+#define ARGUMENT_PARSER
 
 #define EMPTY_ARGS 2
 #define BASE_HEX 16
@@ -35,9 +41,26 @@ struct SFlagProperties {
     int numberOfValues;
     std::string helpMessage;
     int function_index;
-    bool does_need_s_flag;
+    bool extra_s;
 };
 
+class ReturnCodeException : public std::exception {
+    //Exception for returning to main a different code than 0
+    public:
+        ReturnCodeException(int code) : code(code), codeStr(std::to_string(code)) { }
+
+        const char* what() const throw () override {
+            return codeStr.c_str();
+        }
+
+        int getCode() {
+            return this->code;
+        }
+
+    private:
+        int code;
+        std::string codeStr;
+};
 
 class csvParser {
 
@@ -66,15 +89,19 @@ class csvParser {
 
 
 };
+
 const std::string csvParser::SCsvPath = "..."; //Replace with csv file path
 std::map<std::string, SFlagProperties> csvParser::MFlags;
+
+typedef void (*ArgumentFunc)(std::string, std::vector<UValuesUnion>);
 
 class ArgumentsParser {
     private:
         std::map<std::string, std::vector<UValuesUnion>> MFlagsMap;
+        std::vector<ArgumentFunc> functionArr;
 
     public:
-        ArgumentsParser(int argc, char* argv[]);
+        ArgumentsParser(int argc, char* argv[], ArgumentFunc functionArr[], int size);
         ~ArgumentsParser();
     
         //Printing
@@ -88,40 +115,15 @@ class ArgumentsParser {
         void finishParser();
 
         static bool extra_s;
+
+        static int init(int argc, char* argv[], ArgumentFunc functionArray[], int size);
 };
 
 bool ArgumentsParser::extra_s = false;
 
+#include "tests.h"
+
+#endif
 
 
-// ---------------------------- Test functions -------------------------------------
-void func_test(std::string flag, std::vector<UValuesUnion> values) {
-    //Function for automatic tests
-    int index = 0;
-    std::cout << "," << flag;
-    for (auto type : csvParser::MFlags.find(flag)->second.types) {
-        switch (type) {
-        case INTEGER:
-            std::cout << "," << values.at(index).v_integer;
-            break;
-        case BOOLEAN:
-            std::cout << "," << values.at(index).v_bool;
-            break;
-        case STR:
-            std::cout << "," << values.at(index).v_str;
-            break;
-        }
-        index++;
-    }
-}
 
-void s_func(std::string flag, std::vector<UValuesUnion> values) {
-    //Function for automatic tests for the s flag
-    int first = values.at(0).v_integer;
-
-    std::cout << ",-s," << first << std::endl;
-}
-//---------------------------- Test functions -------------------------------------
-
-typedef void (*func)(std::string flag, std::vector<UValuesUnion>);
-func functionArray[] = { func_test, func_test, func_test, func_test, func_test, func_test, func_test, func_test, func_test, func_test, func_test, func_test, func_test, func_test, func_test, func_test, s_func };
