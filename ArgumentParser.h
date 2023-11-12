@@ -72,6 +72,8 @@ class csvParser {
         static std::map<std::string, SFlagProperties> MFlags;
         static const std::string SCsvPath; //Initialized out of the class
 
+        static char* trim(char* str);
+
         static void findFlags();
 
         //Printing for -h flag
@@ -90,8 +92,6 @@ class csvParser {
 
 };
 
-const std::string csvParser::SCsvPath = "..."; //Replace with csv file path
-std::map<std::string, SFlagProperties> csvParser::MFlags;
 
 typedef void (*ArgumentFunc)(std::string, std::vector<UValuesUnion>);
 
@@ -99,27 +99,26 @@ class ArgumentsParser {
     private:
         std::map<std::string, std::vector<UValuesUnion>> MFlagsMap;
         std::vector<ArgumentFunc> functionArr;
+        static bool extra_s;
+        static int SFlagValue;
+
+        void finishParser();
+
+        //Printing
+        const inline bool shouldPrintHelp();
+
+        //Extracting values for a specific token(flag)
+        static std::vector<UValuesUnion> extractValue(const std::string flag, int index, int argc, char* argv[]);
 
     public:
         ArgumentsParser(int argc, char* argv[], ArgumentFunc functionArr[], int size);
         ~ArgumentsParser();
-    
-        //Printing
-        const void printMap();
-        const inline bool shouldPrintHelp();
-        const bool s_flag(int argc, char* argv[]);
 
-        //Extracting values for a specific token(flag)
-        static std::vector<UValuesUnion> extractValue(const std::string flag, int index, int argc ,char* argv[]);
-
-        void finishParser();
-
-        static bool extra_s;
+        static int getSValue();
 
         static int init(int argc, char* argv[], ArgumentFunc functionArray[], int size);
 };
 
-bool ArgumentsParser::extra_s = false;
 
 #include "tests.h"
 
