@@ -20,6 +20,7 @@
 #define MIN_LENGTH_FOR_HEX_NUMBER 3
 #define MIN_VALUE_FOR_S 1
 #define MAX_VALUE_FOR_S 2
+#define NUM_OF_PARAMS_FOR_HELP_IN_ARGC 2
 
 
 union UValuesUnion {
@@ -29,11 +30,11 @@ union UValuesUnion {
 };
 
 enum ETypeValue { NONE, INTEGER, STR, BOOLEAN };
-std::map<ETypeValue, std::string> MTypeValueForPrint{
-    {NONE, "No value"},
-    {INTEGER, "Int"},
-    {STR, "String"},
-    {BOOLEAN, "Boolean"}
+static const std::string MTypeValueForPrint[] = {
+    "No value",
+    "Int",
+    "String",
+    "Boolean"
 };
 
 struct SFlagProperties {
@@ -42,24 +43,6 @@ struct SFlagProperties {
     std::string helpMessage;
     int function_index;
     bool extra_s;
-};
-
-class ReturnCodeException : public std::exception {
-    //Exception for returning to main a different code than 0
-    public:
-        ReturnCodeException(int code) : code(code), codeStr(std::to_string(code)) { }
-
-        const char* what() const throw () override {
-            return codeStr.c_str();
-        }
-
-        int getCode() {
-            return this->code;
-        }
-
-    private:
-        int code;
-        std::string codeStr;
 };
 
 class csvParser {
@@ -102,6 +85,7 @@ class ArgumentsParser {
         static bool extra_s;
         static int SFlagValue;
 
+        //Pass flag values into each flag's corresponding function
         void finishParser();
 
         //Printing
@@ -112,7 +96,7 @@ class ArgumentsParser {
 
     public:
         ArgumentsParser(int argc, char* argv[], ArgumentFunc functionArr[], int size);
-        ~ArgumentsParser();
+        ~ArgumentsParser() noexcept(false);
 
         static int getSValue();
 
