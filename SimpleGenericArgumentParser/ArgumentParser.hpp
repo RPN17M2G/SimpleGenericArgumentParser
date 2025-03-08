@@ -5,12 +5,14 @@
 #include <vector>
 #include <algorithm>
 #include <string>
-#include <fstream>
 #include <cstring>
 #include <functional>
 #include <cstdarg>
 #include<array> 
 #include <exception>
+
+#include "SFlagProperties.hpp"
+#include "CSVParser.hpp"
 
 #define EMPTY_ARGS 2
 #define BASE_HEX 16

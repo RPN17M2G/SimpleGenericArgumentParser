@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <stdexcept>
+#include <fstream>
 
 #include "SFlagProperties.hpp"
 #include "ETypeValue.hpp"

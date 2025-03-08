@@ -9,7 +9,7 @@ char* csvParser::s_trim(char* str)
 {
     /*
     Trims a char* trailing spaces.
-    Input: The char* string to trim
+    Input: The char* string to s_trim
     Output: The trimmed string
     */
     if (str == NULL) { //The line ended, but a value was expected.
@@ -48,18 +48,18 @@ void csvParser::s_findFlags()
     while (std::getline(readCSV, line)) {
         if (line.length() > 2 && line.at(0) != '/' && line.at(1) != '/') { //Not a comment
 
-            part = trim(strtok_s(const_cast<char*>(line.c_str()), ",", &token)); //Cutting the line
+            part = s_trim(strtok_s(const_cast<char*>(line.c_str()), ",", &token)); //Cutting the line
             flag = "-";
             flag += part;
             index++;
 
-            MFlags[flag] = SFlagProperties();
+            s_MFlags[flag] = SFlagProperties();
 
             //Does need s flag extraction
-            part = trim(strtok_s(NULL, ",", &token));
-            checkNull(part, flag, "extra_s");
+            part = s_trim(strtok_s(NULL, ",", &token));
+            s_checkNull(part, flag, "extra_s");
             try {
-                MFlags.at(flag).extra_s = checkBool(part, flag);
+                s_MFlags.at(flag).extra_s = s_checkBool(part, flag);
             }
             catch (std::runtime_error& e) {
                 throw e;
@@ -69,10 +69,10 @@ void csvParser::s_findFlags()
             }
             
             //Number of values extraction
-            part = trim(strtok_s(NULL, ",", &token));
-            checkNull(part, flag, "numberOfValues");
+            part = s_trim(strtok_s(NULL, ",", &token));
+            s_checkNull(part, flag, "numberOfValues");
             try {
-                MFlags.at(flag).numberOfValues = checkInt(part, flag, 0);
+                s_MFlags.at(flag).numberOfValues = s_checkInt(part, flag, 0);
             }
             catch (std::runtime_error& e) {
                 throw e;
@@ -82,12 +82,12 @@ void csvParser::s_findFlags()
             }
             
 
-            for (int i = 0; i < MFlags[flag].numberOfValues; i++) {
+            for (int i = 0; i < s_MFlags[flag].numberOfValues; i++) {
                 //Value type extraction
-                part = trim(strtok_s(NULL, ",", &token));
-                checkNull(part, flag, "valueType");
+                part = s_trim(strtok_s(NULL, ",", &token));
+                s_checkNull(part, flag, "valueType");
                 try {
-                    MFlags.at(flag).types.push_back(switchValueType(part, flag));
+                    s_MFlags.at(flag).types.push_back(s_switchValueType(part, flag));
                 }
                 catch (std::runtime_error& e) {
                     throw e;
@@ -99,10 +99,10 @@ void csvParser::s_findFlags()
             }
             
             //Help message extraction
-            part = trim(strtok_s(NULL, ",", &token));
-            checkNull(part, flag, "helpMessage");
+            part = s_trim(strtok_s(NULL, ",", &token));
+            s_checkNull(part, flag, "helpMessage");
             try {
-                MFlags.at(flag).helpMessage = part;
+                s_MFlags.at(flag).helpMessage = part;
             }
             catch (std::runtime_error& e) {
                 throw e;
@@ -114,7 +114,7 @@ void csvParser::s_findFlags()
 
             //Function index calculation
             try {
-                MFlags.at(flag).function_index = index;
+                s_MFlags.at(flag).function_index = index;
             }
             catch (std::runtime_error& e) {
                 throw e;
@@ -134,12 +134,12 @@ void csvParser::s_findFlags()
 
     //Adding s flag manullly
     try {
-        MFlags["-s"] = SFlagProperties();
-        MFlags.at("-s").extra_s = false;
-        MFlags.at("-s").numberOfValues = 1;
-        MFlags.at("-s").types.push_back(INTEGER);
-        MFlags.at("-s").helpMessage = "DESC - Choose a number 1 or 2"; //Example operation, change as require
-        MFlags.at("-s").function_index = ++index;
+        s_MFlags["-s"] = SFlagProperties();
+        s_MFlags.at("-s").extra_s = false;
+        s_MFlags.at("-s").numberOfValues = 1;
+        s_MFlags.at("-s").types.push_back(INTEGER);
+        s_MFlags.at("-s").helpMessage = "DESC - Choose a number 1 or 2"; //Example operation, change as require
+        s_MFlags.at("-s").function_index = ++index;
     }
     catch (...) {
         throw std::runtime_error("[!] Error occurred while accessing flag information - the key does not exist.");
@@ -152,7 +152,7 @@ void csvParser::s_printAllFlags()
     Printing information about all flags.
     */
     std::cout << "[*] -h / --help: Prints documantiaion of the flags" << std::endl; //Prints help flag
-    for (auto index : MFlags) {
+    for (auto index : s_MFlags) {
         if (index.first != "-h") { //Don't print help flag again
             std::cout << "[*] " << index.first << ": " << index.second.helpMessage
                 << ", Function index: " << index.second.function_index  << ", Number of values: " << index.second.numberOfValues;
@@ -176,7 +176,7 @@ std::string csvParser::s_formatFlagsForPrint()
     Output: the list of all flags formated
     */
     std::string output = "";
-    for (auto index : MFlags) {
+    for (auto index : s_MFlags) {
         output += " [" + index.first + "]";
     }
     return output;
@@ -222,7 +222,7 @@ long long csvParser::s_checkInt(char* part, std::string& flag, int minValue, int
     Input: The part to check, the name of the flag for error printing, An indicator of the base of the number, the range of numbers
     Output: The string as int
     */
-    long long temp = checkInt(part, flag, hex);
+    long long temp = s_checkInt(part, flag, hex);
     if (temp < minValue || temp > maxValue) {
         throw std::runtime_error("[!] Value for flag " + flag.substr(1) + " must be greater than " + std::to_string(minValue) + " and less than " + std::to_string(maxValue) + ": " + part);
     }
@@ -236,7 +236,7 @@ long long csvParser::s_checkInt(char* part, std::string& flag, int minValue, boo
     Input: The part to check, the name of the flag for error printing, An indicator of the base of the number, the minimum value
     Output: The string as int
     */
-    long long temp = checkInt(part, flag, hex);
+    long long temp = s_checkInt(part, flag, hex);
     if (temp < minValue) {
         throw std::runtime_error("[!] Value for flag " + flag.substr(1) + " must be greater than " + std::to_string(minValue) + ": " + part);
     }
