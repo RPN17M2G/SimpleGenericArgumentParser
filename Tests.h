@@ -1,8 +1,6 @@
+#pragma once
 
 #include <iostream>
-
-#ifndef TESTS
-#define TESTS
 
 #include "ArgumentParser.h"
 
@@ -40,5 +38,4 @@ void s_func(std::string flag, std::vector<UValuesUnion> values) {
     std::cout << ",-s," << first << std::endl;
 }
 //---------------------------- Test functions -------------------------------------
-
-#endif
++
