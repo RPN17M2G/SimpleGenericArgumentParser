@@ -1,12 +1,33 @@
-# Simple and Generic Argument Parser - SGAP
-This is a small project that has a simple and all-purpose argument parser. It can handle three types of input values: text, numbers (you can use decimal or hexadecimal base), and boolean values. 
-The data about the flags is set up using a CSV file.
+# Simple and Generic Argument Parser (SGAP)
 
-option for some flags to require a certin flag in order to work(I called it "s" for example).
+**SGAP** is a lightweight, flexible argument parser designed for general-purpose use. It supports a variety of input types and uses a CSV-based configuration to define flags and their behavior.
 
-helper files:
-command.txt - Includes the command used to compile the project(32bit compilation)
+## Features
 
-tests.py - Automatic python tests - use the test functions on the header file for testing the Parser
+- Parses three types of inputs:
+  - **Text**
+  - **Numbers** (decimal and hexadecimal)
+  - **Booleans**
+- Flags are defined via a **CSV file** (`flags.csv`)
+- Supports **dependency between flags and a special flag** (e.g., certain flags require the special flag to be present)
+- Designed for simplicity and portability
 
-flags.csv - Includes the data on all the different flags.
+## File Overview
+
+- `flags.csv` – Contains definitions of all supported flags and their configurations
+- `tests.py` – Automated test suite using functions defined in the header file
+
+## Usage
+
+1. Define flags and their types in `flags.csv`
+2. Compile the project using the command in `command.txt`
+3. Run tests using `tests.py` to validate the parser
+
+## Flag Dependencies
+
+Flags can be configured to require other flags (e.g., flag `"s"` must be present for another flag to function). 
+
+## Build
+
+The argument parser is not divided into different files by purpose because of the environment it was required for.
+The argument parser can be compiled into 32bit or 64bit excetubales.
